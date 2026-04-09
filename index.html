@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyNetWord Streaming Premium</title>
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#0b0f1a;color:white;}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;padding:40px;}
+.card{background:#121826;padding:20px;border-radius:12px;}
+.card img{width:100%;height:80px;object-fit:contain;}
+.price{color:#38b000;font-size:18px;}
+.stock{font-size:13px;color:#4CAF50;}
+button{padding:8px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer;width:100%;margin-top:8px;}
+.cart{position:fixed;right:-350px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s;overflow:auto;}
+.cart.active{right:0;}
+.cart-toggle{position:fixed;top:20px;right:20px;background:#6c63ff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.admin-panel{position:fixed;top:0;left:0;width:100%;height:100%;background:#000000e6;display:none;overflow:auto;padding:40px;}
+.admin-box{background:#121826;padding:20px;border-radius:12px;}
+input{padding:8px;margin:5px 0;width:100%;border-radius:6px;border:none;}
+</style>
+</head>
+<body>
+
+<div class="products" id="products"></div>
+
+<div class="cart" id="cart">
+<h2>Carrito</h2>
+<div id="cartItems"></div>
+<h3>Total: $<span id="total">0</span></h3>
+
+<input type="text" id="buyerName" placeholder="Tu nombre">
+<input type="email" id="buyerEmail" placeholder="Tu correo">
+<button onclick="confirmPayment()">Confirmar Pago</button>
+</div>
+
+<div class="cart-toggle" onclick="toggleCart()">
+<i class="fas fa-shopping-cart"></i>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+<div class="admin-box">
+<h2>Panel Administrador</h2>
+<div id="adminProducts"></div>
+<button onclick="closeAdmin()">Cerrar</button>
+</div>
+</div>
+
+<script>
+emailjs.init("YOUR_PUBLIC_KEY");
+
+let products = JSON.parse(localStorage.getItem("products")) || [
+{ name:"Netflix Completa", price:225, stock:10, logo:"https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg"},
+{ name:"Disney+ Completa", price:45, stock:10, logo:"https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg"},
+{ name:"Spotify Premium", price:80, stock:10, logo:"https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg"}
+];
+
+let cart=[];
+
+function saveProducts(){
+localStorage.setItem("products",JSON.stringify(products));
+}
+
+function render(){
+const container=document.getElementById("products");
+container.innerHTML="";
+products.forEach((p,i)=>{
+container.innerHTML+=`
+<div class="card">
+<img src="${p.logo}">
+<h3>${p.name}</h3>
+<div class="stock">Stock: ${p.stock}</div>
+<div class="price">$${p.price}</div>
+<button onclick="addToCart(${i})">Comprar</button>
+</div>`;
+});
+}
+render();
+
+function addToCart(i){
+if(products[i].stock<=0){alert("Agotado");return;}
+cart.push(products[i]);
+products[i].stock--;
+saveProducts();
+updateCart();
+render();
+toggleCart();
+}
+
+function updateCart(){
+let total=0,items="";
+cart.forEach(p=>{
+total+=p.price;
+items+=`<p>${p.name} - $${p.price}</p>`;
+});
+document.getElementById("cartItems").innerHTML=items;
+document.getElementById("total").innerText=total;
+}
+
+function toggleCart(){
+document.getElementById("cart").classList.toggle("active");
+}
+
+function confirmPayment(){
+const name=document.getElementById("buyerName").value;
+const email=document.getElementById("buyerEmail").value;
+
+if(!name || !email){alert("Completa tus datos");return;}
+
+let order="";
+let total=0;
+cart.forEach(p=>{
+order+=p.name+" - $"+p.price+"\n";
+total+=p.price;
+});
+
+emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",{
+buyer:name,
+buyer_email:email,
+order:order,
+total:total
+}).then(()=>{
+alert("Comprobante enviado al correo");
+cart=[];
+updateCart();
+});
+}
+
+/* ADMIN ACCESS CON TECLA SECRETA */
+document.addEventListener("keydown",function(e){
+if(e.ctrlKey && e.shiftKey && e.key==="A"){
+let pass=prompt("Contraseña Admin:");
+if(pass==="admin2026"){
+openAdmin();
+}else{alert("Incorrecta");}
+}
+});
+
+function openAdmin(){
+document.getElementById("adminPanel").style.display="block";
+renderAdmin();
+}
+
+function closeAdmin(){
+document.getElementById("adminPanel").style.display="none";
+}
+
+function renderAdmin(){
+let html="";
+products.forEach((p,i)=>{
+html+=`
+<h4>${p.name}</h4>
+Precio: <input type="number" value="${p.price}" onchange="updatePrice(${i},this.value)">
+Stock: <input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
+<hr>`;
+});
+document.getElementById("adminProducts").innerHTML=html;
+}
+
+function updatePrice(i,value){
+products[i].price=parseInt(value);
+saveProducts();
+render();
+}
+
+function updateStock(i,value){
+products[i].stock=parseInt(value);
+saveProducts();
+render();
+}
+</script>
+
+</body>
+</html>

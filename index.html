@@ -9,22 +9,168 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#0b0f1a;color:white;}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;padding:40px;}
-.card{background:#121826;padding:20px;border-radius:12px;}
-.card img{width:100%;height:80px;object-fit:contain;}
-.price{color:#38b000;font-size:18px;}
-.stock{font-size:13px;color:#4CAF50;}
-button{padding:8px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer;width:100%;margin-top:8px;}
-.cart{position:fixed;right:-350px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s;overflow:auto;}
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#0a0f1c;
+color:white;
+overflow-x:hidden;
+}
+
+/* HERO NEON */
+.hero{
+text-align:center;
+padding:80px 20px;
+background:radial-gradient(circle at top,#1a1f3c,#0a0f1c);
+}
+
+.hero h1{
+font-size:3.5rem;
+color:#fff;
+text-shadow:
+0 0 5px #6c63ff,
+0 0 10px #6c63ff,
+0 0 20px #7209b7,
+0 0 40px #7209b7;
+animation:neonPulse 2s infinite alternate;
+}
+
+@keyframes neonPulse{
+from{
+text-shadow:
+0 0 5px #6c63ff,
+0 0 15px #7209b7,
+0 0 25px #7209b7;
+}
+to{
+text-shadow:
+0 0 20px #4cc9f0,
+0 0 30px #7209b7,
+0 0 60px #7209b7;
+}
+}
+
+/* PRODUCTOS */
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:25px;
+padding:40px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:15px;
+box-shadow:0 0 15px rgba(108,99,255,0.3);
+transition:.3s;
+border:1px solid rgba(108,99,255,0.3);
+}
+
+.card:hover{
+transform:translateY(-10px);
+box-shadow:0 0 25px #6c63ff;
+}
+
+.card img{
+width:100%;
+height:80px;
+object-fit:contain;
+}
+
+.price{
+color:#38b000;
+font-size:18px;
+}
+
+.stock{
+font-size:13px;
+color:#4CAF50;
+}
+
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#6c63ff;
+color:white;
+cursor:pointer;
+transition:.3s;
+}
+
+button:hover{
+box-shadow:0 0 15px #6c63ff;
+}
+
+/* CARRITO */
+.cart{
+position:fixed;
+top:0;
+right:-350px;
+width:320px;
+height:100%;
+background:#0f172a;
+padding:20px;
+transition:.3s;
+overflow:auto;
+box-shadow:-5px 0 20px rgba(0,0,0,0.5);
+}
+
 .cart.active{right:0;}
-.cart-toggle{position:fixed;top:20px;right:20px;background:#6c63ff;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.admin-panel{position:fixed;top:0;left:0;width:100%;height:100%;background:#000000e6;display:none;overflow:auto;padding:40px;}
-.admin-box{background:#121826;padding:20px;border-radius:12px;}
-input{padding:8px;margin:5px 0;width:100%;border-radius:6px;border:none;}
+
+.cart-toggle{
+position:fixed;
+top:20px;
+right:20px;
+background:#6c63ff;
+width:55px;
+height:55px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+box-shadow:0 0 15px #6c63ff;
+}
+
+/* ADMIN */
+.admin-panel{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000000ee;
+display:none;
+overflow:auto;
+padding:40px;
+}
+
+.admin-box{
+background:#111827;
+padding:20px;
+border-radius:15px;
+box-shadow:0 0 20px #6c63ff;
+}
+
+input{
+width:100%;
+padding:8px;
+margin:5px 0;
+border-radius:6px;
+border:none;
+}
+
 </style>
 </head>
 <body>
+
+<section class="hero">
+<h1>SkyNetWord Premium</h1>
+<p>Streaming • Apps • IA • Gaming</p>
+</section>
 
 <div class="products" id="products"></div>
 
@@ -35,7 +181,7 @@ input{padding:8px;margin:5px 0;width:100%;border-radius:6px;border:none;}
 
 <input type="text" id="buyerName" placeholder="Tu nombre">
 <input type="email" id="buyerEmail" placeholder="Tu correo">
-<button onclick="confirmPayment()">Confirmar Pago</button>
+<button onclick="confirmPayment()">Enviar Comprobante</button>
 </div>
 
 <div class="cart-toggle" onclick="toggleCart()">
@@ -44,13 +190,14 @@ input{padding:8px;margin:5px 0;width:100%;border-radius:6px;border:none;}
 
 <div class="admin-panel" id="adminPanel">
 <div class="admin-box">
-<h2>Panel Administrador</h2>
+<h2>Panel Admin</h2>
 <div id="adminProducts"></div>
 <button onclick="closeAdmin()">Cerrar</button>
 </div>
 </div>
 
 <script>
+
 emailjs.init("YOUR_PUBLIC_KEY");
 
 let products = JSON.parse(localStorage.getItem("products")) || [
@@ -111,8 +258,7 @@ const email=document.getElementById("buyerEmail").value;
 
 if(!name || !email){alert("Completa tus datos");return;}
 
-let order="";
-let total=0;
+let order="",total=0;
 cart.forEach(p=>{
 order+=p.name+" - $"+p.price+"\n";
 total+=p.price;
@@ -124,19 +270,19 @@ buyer_email:email,
 order:order,
 total:total
 }).then(()=>{
-alert("Comprobante enviado al correo");
+alert("Comprobante enviado correctamente");
 cart=[];
 updateCart();
 });
 }
 
-/* ADMIN ACCESS CON TECLA SECRETA */
+/* ADMIN ACCESO OCULTO */
 document.addEventListener("keydown",function(e){
 if(e.ctrlKey && e.shiftKey && e.key==="A"){
-let pass=prompt("Contraseña Admin:");
+let pass=prompt("Contraseña:");
 if(pass==="admin2026"){
 openAdmin();
-}else{alert("Incorrecta");}
+}
 }
 });
 
@@ -154,24 +300,16 @@ let html="";
 products.forEach((p,i)=>{
 html+=`
 <h4>${p.name}</h4>
-Precio: <input type="number" value="${p.price}" onchange="updatePrice(${i},this.value)">
-Stock: <input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
+Precio:<input type="number" value="${p.price}" onchange="updatePrice(${i},this.value)">
+Stock:<input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
 <hr>`;
 });
 document.getElementById("adminProducts").innerHTML=html;
 }
 
-function updatePrice(i,value){
-products[i].price=parseInt(value);
-saveProducts();
-render();
-}
+function updatePrice(i,v){products[i].price=parseInt(v);saveProducts();render();}
+function updateStock(i,v){products[i].stock=parseInt(v);saveProducts();render();}
 
-function updateStock(i,value){
-products[i].stock=parseInt(value);
-saveProducts();
-render();
-}
 </script>
 
 </body>

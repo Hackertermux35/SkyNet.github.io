@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skynet Monitoring</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    body { margin:0; font-family:Arial; background:#0f172a; color:white; }
+    header { background:#020617; padding:15px; text-align:center; font-size:1.5rem; }
+    .container { display:grid; grid-template-columns:250px 1fr; height:calc(100vh - 60px); }
+    .sidebar { background:#020617; padding:20px; }
+    .unit { padding:10px; margin:5px 0; background:#1e293b; border-radius:8px; }
+    #map { height:100%; }
+  </style>
+</head>
+<body><header>Skynet Monitoring System</header><div class="container">
+  <div class="sidebar">
+    <h3>Unidades</h3>
+    <div class="unit">🚚 Camión en tiempo real</div>
+  </div>
+  <div id="map"></div>
+</div><script>
+  var map = L.map('map').setView([20.533, -97.459], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  var truckIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/743/743131.png',
+    iconSize: [40, 40]
+  });
+
+  var marker = L.marker([20.533, -97.459], { icon: truckIcon }).addTo(map);
+
+  async function actualizarUbicacion() {
+    try {
+      const res = await fetch('https://TU-WORKER-URL');
+      const data = await res.json();
+
+      if (data.length > 0) {
+        let lat = data[0].latitude;
+        let lon = data[0].longitude;
+        let speed = data[0].speed || 0;
+
+        marker.setLatLng([lat, lon]);
+        map.setView([lat, lon]);
+
+        marker.bindPopup(`🚚 Camión<br>Velocidad: ${speed} km/h`);
+      }
+    } catch (error) {
+      console.error('Error obteniendo datos:', error);
+    }
+  }
+
+  setInterval(actualizarUbicacion, 5000);
+</script></body>
+</html>
